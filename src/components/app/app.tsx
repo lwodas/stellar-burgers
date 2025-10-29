@@ -33,12 +33,12 @@ export const App = () => {
   const navigate = useNavigate();
   const background = location.state?.background;
 
-  const handleModalClose = () => navigate(-1);
-
   useEffect(() => {
     dispatch(checkUserAuth());
     dispatch(fetchIngredients());
   }, [dispatch]);
+
+  const handleModalClose = () => navigate(-1);
 
   const closeIngredientModal = () => {
     dispatch(clearCurrentIngredient());
@@ -56,12 +56,16 @@ export const App = () => {
   return (
     <div className={styles.app}>
       <AppHeader />
+
+      {/* Основные маршруты */}
       <Routes location={background || location}>
         <Route path='/' element={<ConstructorPage />} />
         <Route path='/feed' element={<Feed />} />
         <Route path='/ingredients/:id' element={<IngredientDetails />} />
         <Route path='/feed/:number' element={<OrderInfo />} />
         <Route path='*' element={<NotFound404 />} />
+
+        {/* Авторизация */}
         <Route
           path='/login'
           element={
@@ -94,6 +98,8 @@ export const App = () => {
             </ProtectedRoute>
           }
         />
+
+        {/* Профиль и заказы */}
         <Route
           path='/profile'
           element={
@@ -133,7 +139,7 @@ export const App = () => {
           <Route
             path='/feed/:number'
             element={
-              <Modal onClose={handleModalClose} title={'Детали заказа'}>
+              <Modal onClose={handleModalClose} title='Детали заказа'>
                 <OrderInfo />
               </Modal>
             }
@@ -141,9 +147,11 @@ export const App = () => {
           <Route
             path='/profile/orders/:number'
             element={
-              <Modal onClose={handleModalClose} title={''}>
-                <OrderInfo />
-              </Modal>
+              <ProtectedRoute>
+                <Modal onClose={handleModalClose} title='Детали заказа'>
+                  <OrderInfo />
+                </Modal>
+              </ProtectedRoute>
             }
           />
         </Routes>
