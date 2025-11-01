@@ -15,7 +15,8 @@ export const OrderCard: FC<OrderCardProps> = memo(({ order }) => {
   );
 
   const orderInfo = useMemo(() => {
-    if (!ingredients.length) return null;
+    if (!ingredients.length || !order || !Array.isArray(order.ingredients))
+      return null;
 
     const ingredientsInfo = order.ingredients.reduce(
       (acc: TIngredient[], item: string) => {

@@ -4,6 +4,10 @@ import { useAppSelector, useAppDispatch } from '../../services/store';
 import { BurgerConstructorUI } from '@ui';
 import { createOrder, clearOrder } from '../../services/slices/ordersSlice';
 import { clearConstructor } from '../../services/slices/constructorSlice';
+import {
+  addProfileOrder,
+  fetchUserOrders
+} from '../../services/slices/profileOrdersSlice';
 
 export const BurgerConstructor: FC = () => {
   const dispatch = useAppDispatch();
@@ -16,7 +20,7 @@ export const BurgerConstructor: FC = () => {
   );
   const user = useAppSelector((state) => state.auth.user);
 
-  const onOrderClick = () => {
+  const onOrderClick = async () => {
     if (!bun || orderRequest) return;
 
     if (!user || !user.email) {
@@ -29,7 +33,18 @@ export const BurgerConstructor: FC = () => {
       ...ingredients.map((item) => item._id),
       bun._id
     ];
-    dispatch(createOrder(ingredientsIds));
+
+    const resultAction = await dispatch(createOrder(ingredientsIds));
+
+    if (createOrder.fulfilled.match(resultAction)) {
+      const normalizedOrder = {
+        ...resultAction.payload,
+        ingredients: resultAction.payload.ingredients || []
+      };
+
+      dispatch(addProfileOrder(normalizedOrder));
+      dispatch(fetchUserOrders());
+    }
   };
 
   const closeOrderModal = () => {

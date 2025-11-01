@@ -42,7 +42,7 @@ const ordersSlice = createSlice({
       })
       .addCase(createOrder.rejected, (state, action) => {
         state.orderRequest = false;
-        state.error = action.error.message || 'Order creation failed';
+        state.error = action.error.message || 'Ошибка создания заказа';
       });
   }
 });

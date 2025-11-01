@@ -30,3 +30,5 @@ export const ProtectedRoute: FC<TProtectedRouteProps> = ({
 
   return children;
 };
+
+export default ProtectedRoute;

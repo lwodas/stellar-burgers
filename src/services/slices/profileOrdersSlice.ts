@@ -28,6 +28,9 @@ const profileOrdersSlice = createSlice({
   reducers: {
     clearProfileOrders: (state) => {
       state.orders = [];
+    },
+    addProfileOrder: (state, action) => {
+      state.orders.unshift(action.payload);
     }
   },
   extraReducers: (builder) => {
@@ -47,5 +50,6 @@ const profileOrdersSlice = createSlice({
   }
 });
 
-export const { clearProfileOrders } = profileOrdersSlice.actions;
+export const { clearProfileOrders, addProfileOrder } =
+  profileOrdersSlice.actions;
 export const profileOrdersReducer = profileOrdersSlice.reducer;

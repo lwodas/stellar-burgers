@@ -11,6 +11,7 @@ import {
   getUserApi,
   updateUserApi
 } from '../../utils/burger-api';
+import { setCookie, deleteCookie } from '../../utils/cookie';
 import { TUser } from '../../utils/types';
 
 type TAuthState = {
@@ -29,6 +30,7 @@ const initialState: TAuthState = {
   isUpdateSuccess: false
 };
 
+// Проверка авторизации при старте приложения
 export const checkUserAuth = createAsyncThunk(
   'auth/check',
   async (_, { rejectWithValue }) => {
@@ -36,18 +38,21 @@ export const checkUserAuth = createAsyncThunk(
       const response = await getUserApi();
       return response.user;
     } catch (error) {
-      return rejectWithValue(error);
+      // токен истёк или отсутствует
+      return rejectWithValue('Не авторизован');
     }
   }
 );
 
+// Логин
 export const login = createAsyncThunk(
   'auth/login',
   async (data: { email: string; password: string }, { rejectWithValue }) => {
     try {
       const response = await loginUserApi(data);
-      localStorage.setItem('accessToken', response.accessToken);
-      document.cookie = `refreshToken=${response.refreshToken}; path=/;`;
+      const accessToken = response.accessToken.split('Bearer ')[1];
+      setCookie('accessToken', accessToken);
+      localStorage.setItem('refreshToken', response.refreshToken);
       return response.user;
     } catch (error) {
       return rejectWithValue(error);
@@ -55,6 +60,7 @@ export const login = createAsyncThunk(
   }
 );
 
+// Регистрация
 export const register = createAsyncThunk(
   'auth/register',
   async (
@@ -63,8 +69,9 @@ export const register = createAsyncThunk(
   ) => {
     try {
       const response = await registerUserApi(data);
-      localStorage.setItem('accessToken', response.accessToken);
-      document.cookie = `refreshToken=${response.refreshToken}; path=/;`;
+      const accessToken = response.accessToken.split('Bearer ')[1];
+      setCookie('accessToken', accessToken);
+      localStorage.setItem('refreshToken', response.refreshToken);
       return response.user;
     } catch (error) {
       return rejectWithValue(error);
@@ -72,6 +79,7 @@ export const register = createAsyncThunk(
   }
 );
 
+// Обновление профиля
 export const updateUser = createAsyncThunk(
   'auth/updateUser',
   async (
@@ -87,16 +95,14 @@ export const updateUser = createAsyncThunk(
   }
 );
 
+// Выход
 export const logout = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
       await logoutApi();
-      localStorage.clear();
-      document.cookie =
-        'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      document.cookie =
-        'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      localStorage.removeItem('refreshToken');
+      deleteCookie('accessToken');
       return true;
     } catch (error) {
       return rejectWithValue(error);
@@ -149,7 +155,8 @@ export const authSlice = createSlice({
       )
       .addMatcher(isRejectedWithValue, (state, action) => {
         state.isLoading = false;
-        state.error = (action.payload as Error).message || 'Ошибка авторизации';
+        state.error =
+          (action.payload as Error)?.message || 'Ошибка авторизации';
       });
   }
 });
