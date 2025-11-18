@@ -1,71 +1,52 @@
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useLocation,
-  useNavigate
-} from 'react-router-dom';
-import { ConstructorPage } from '@pages';
-import {
+  ConstructorPage,
+  Feed,
   Login,
   Register,
   ForgotPassword,
   ResetPassword,
   Profile,
   ProfileOrders,
-  Feed,
   NotFound404
 } from '@pages';
-import { IngredientDetails, OrderInfo, Modal } from '@components';
+import {
+  AppHeader,
+  Modal,
+  OrderInfo,
+  IngredientDetails,
+  ProtectedRoute
+} from '@components';
 import '../../index.css';
 import styles from './app.module.css';
-import { AppHeader } from '@components';
 import { useEffect } from 'react';
-import { clearCurrentIngredient } from '../../services/slices/modalSlice';
-import { fetchIngredients } from '../../services/slices/ingredientsSlice';
-import { checkUserAuth } from '../../services/slices/authSlice';
-import { useAppDispatch } from '../../services/store';
-import { ProtectedRoute } from './protected-route';
+import { useDispatch } from '../../services/store';
+import { fetchIngredients } from '../../services/slices/ingredients/ingredientsActions';
+import { checkUserAuth } from '../../services/slices/auth/authActions';
 
-export const App = () => {
-  const dispatch = useAppDispatch();
+const App = () => {
+  const dispatch = useDispatch();
   const location = useLocation();
   const navigate = useNavigate();
   const background = location.state?.background;
 
-  useEffect(() => {
-    dispatch(checkUserAuth());
-    dispatch(fetchIngredients());
-  }, [dispatch]);
-
-  const handleModalClose = () => navigate(-1);
-
-  const closeIngredientModal = () => {
-    dispatch(clearCurrentIngredient());
-    navigate(background?.pathname || '/', { replace: true });
+  // Функция закрытия модального окна
+  const closeModal = () => {
+    navigate(-1);
   };
 
   useEffect(() => {
-    if (background) {
-      document.body.classList.add('modal-open');
-    } else {
-      document.body.classList.remove('modal-open');
-    }
-  }, [background]);
+    dispatch(fetchIngredients());
+    dispatch(checkUserAuth());
+  }, []);
 
   return (
     <div className={styles.app}>
       <AppHeader />
 
-      {/* Основные маршруты */}
       <Routes location={background || location}>
         <Route path='/' element={<ConstructorPage />} />
         <Route path='/feed' element={<Feed />} />
-        <Route path='/ingredients/:id' element={<IngredientDetails />} />
-        <Route path='/feed/:number' element={<OrderInfo />} />
-        <Route path='*' element={<NotFound404 />} />
-
-        {/* Авторизация */}
         <Route
           path='/login'
           element={
@@ -98,8 +79,6 @@ export const App = () => {
             </ProtectedRoute>
           }
         />
-
-        {/* Профиль и заказы */}
         <Route
           path='/profile'
           element={
@@ -116,31 +95,24 @@ export const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path='/profile/orders/:number'
-          element={
-            <ProtectedRoute>
-              <OrderInfo />
-            </ProtectedRoute>
-          }
-        />
+        <Route path='*' element={<NotFound404 />} />
       </Routes>
 
       {background && (
         <Routes>
           <Route
-            path='/ingredients/:id'
+            path='/feed/:number'
             element={
-              <Modal onClose={closeIngredientModal} title='Детали ингредиента'>
-                <IngredientDetails />
+              <Modal title='Детали заказа' onClose={closeModal}>
+                <OrderInfo />
               </Modal>
             }
           />
           <Route
-            path='/feed/:number'
+            path='/ingredients/:id'
             element={
-              <Modal onClose={handleModalClose} title='Детали заказа'>
-                <OrderInfo />
+              <Modal title='Детали ингредиента' onClose={closeModal}>
+                <IngredientDetails />
               </Modal>
             }
           />
@@ -148,7 +120,7 @@ export const App = () => {
             path='/profile/orders/:number'
             element={
               <ProtectedRoute>
-                <Modal onClose={handleModalClose} title='Детали заказа'>
+                <Modal title='Детали заказа' onClose={closeModal}>
                   <OrderInfo />
                 </Modal>
               </ProtectedRoute>
@@ -159,3 +131,5 @@ export const App = () => {
     </div>
   );
 };
+
+export default App;

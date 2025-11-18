@@ -1,69 +1,76 @@
 import { FC, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppSelector, useAppDispatch } from '../../services/store';
+import { TConstructorIngredient } from '@utils-types';
 import { BurgerConstructorUI } from '@ui';
-import { createOrder, clearOrder } from '../../services/slices/ordersSlice';
-import { clearConstructor } from '../../services/slices/constructorSlice';
+import { useSelector, useDispatch } from '../../services/store';
+import { postOrderBurger } from '../../services/slices/constructor/constructorActions';
 import {
-  addProfileOrder,
-  fetchUserOrders
-} from '../../services/slices/profileOrdersSlice';
+  getBurgerItems,
+  getOrderRequest,
+  getOrderModalData,
+  resetOrderModalData
+} from '@slices';
 
+import { getUser } from '@slices';
 export const BurgerConstructor: FC = () => {
-  const dispatch = useAppDispatch();
+  /** TODO: взять переменные constructorItems, orderRequest и orderModalData из стора */
+  /*
+  const constructorItems = {
+    bun: {
+      price: 0
+    },
+    ingredients: []
+  };
+
+  const orderRequest = false;
+
+  const orderModalData = null;
+  */
   const navigate = useNavigate();
-  const { bun, ingredients } = useAppSelector(
-    (state) => state.burgerConstructor
-  );
-  const { orderRequest, orderModalData } = useAppSelector(
-    (state) => state.orders
-  );
-  const user = useAppSelector((state) => state.auth.user);
 
-  const onOrderClick = async () => {
-    if (!bun || orderRequest) return;
+  const dispatch = useDispatch();
 
-    if (!user || !user.email) {
-      navigate('/login');
+  const constructorItems = useSelector(getBurgerItems);
+
+  const orderRequest = useSelector(getOrderRequest);
+
+  const orderModalData = useSelector(getOrderModalData);
+
+  const user = useSelector(getUser);
+
+  const onOrderClick = () => {
+    if (!user) {
+      navigate('/login', { replace: true });
       return;
     }
 
-    const ingredientsIds = [
-      bun._id,
-      ...ingredients.map((item) => item._id),
-      bun._id
-    ];
-
-    const resultAction = await dispatch(createOrder(ingredientsIds));
-
-    if (createOrder.fulfilled.match(resultAction)) {
-      const normalizedOrder = {
-        ...resultAction.payload,
-        ingredients: resultAction.payload.ingredients || []
-      };
-
-      dispatch(addProfileOrder(normalizedOrder));
-      dispatch(fetchUserOrders());
-    }
+    if (!constructorItems.bun || orderRequest) return;
+    const ingredientIds: string[] = [constructorItems.bun._id];
+    constructorItems.ingredients.forEach((item) =>
+      ingredientIds.push(item._id)
+    );
+    dispatch(postOrderBurger(ingredientIds));
   };
 
   const closeOrderModal = () => {
-    dispatch(clearOrder());
-    dispatch(clearConstructor());
+    dispatch(resetOrderModalData());
   };
 
   const price = useMemo(
     () =>
-      (bun ? bun.price * 2 : 0) +
-      ingredients.reduce((acc, item) => acc + item.price, 0),
-    [bun, ingredients]
+      (constructorItems.bun ? constructorItems.bun.price * 2 : 0) +
+      constructorItems.ingredients.reduce(
+        (s: number, v: TConstructorIngredient) => s + v.price,
+        0
+      ),
+    [constructorItems]
   );
 
   return (
     <BurgerConstructorUI
       price={price}
       orderRequest={orderRequest}
-      constructorItems={{ bun, ingredients }}
+      constructorItems={constructorItems}
       orderModalData={orderModalData}
       onOrderClick={onOrderClick}
       closeOrderModal={closeOrderModal}

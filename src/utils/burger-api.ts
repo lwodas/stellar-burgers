@@ -109,7 +109,7 @@ export const orderBurgerApi = (data: string[]) =>
     method: 'POST',
     headers: {
       'Content-Type': 'application/json;charset=utf-8',
-      Authorization: `Bearer ${getCookie('accessToken')}`
+      authorization: getCookie('accessToken')
     } as HeadersInit,
     body: JSON.stringify({
       ingredients: data
@@ -209,7 +209,7 @@ type TUserResponse = TServerResponse<{ user: TUser }>;
 export const getUserApi = () =>
   fetchWithRefresh<TUserResponse>(`${URL}/auth/user`, {
     headers: {
-      Authorization: `Bearer ${getCookie('accessToken')}`
+      authorization: getCookie('accessToken')
     } as HeadersInit
   });
 

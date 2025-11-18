@@ -1,36 +1,34 @@
 import { ProfileUI } from '@ui-pages';
 import { FC, SyntheticEvent, useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../../services/store';
-import { useNavigate } from 'react-router-dom';
-import { updateUser } from '../../services/slices/authSlice';
+import { useDispatch, useSelector } from '../../services/store';
+import { getUser } from '@slices';
+import { updateUser } from '../../services/slices/auth/authActions';
 
 export const Profile: FC = () => {
-  const dispatch = useAppDispatch();
-  const navigate = useNavigate();
+  /** TODO: взять переменную из стора */
+  /*
+  const user = {
+    name: '',
+    email: ''
+  };
+  */
 
-  const user = useAppSelector((state) => state.auth.user);
-  const isAuthChecked = useAppSelector((state) => state.auth.isAuthChecked);
+  const user = useSelector(getUser);
 
   const [formValue, setFormValue] = useState({
-    name: '',
-    email: '',
+    name: user?.name || '',
+    email: user?.email || '',
     password: ''
   });
 
-  useEffect(() => {
-    if (isAuthChecked && !user) {
-      navigate('/login');
-    }
-  }, [user, isAuthChecked, navigate]);
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    if (user) {
-      setFormValue({
-        name: user.name,
-        email: user.email,
-        password: ''
-      });
-    }
+    setFormValue((prevState) => ({
+      ...prevState,
+      name: user?.name || '',
+      email: user?.email || ''
+    }));
   }, [user]);
 
   const isFormChanged =
@@ -45,23 +43,19 @@ export const Profile: FC = () => {
 
   const handleCancel = (e: SyntheticEvent) => {
     e.preventDefault();
-    if (user) {
-      setFormValue({
-        name: user.name,
-        email: user.email,
-        password: ''
-      });
-    }
+    setFormValue({
+      name: user?.name || '',
+      email: user?.email || '',
+      password: ''
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormValue((prev) => ({
-      ...prev,
+    setFormValue((prevState) => ({
+      ...prevState,
       [e.target.name]: e.target.value
     }));
   };
-
-  if (!user) return null;
 
   return (
     <ProfileUI
@@ -72,4 +66,6 @@ export const Profile: FC = () => {
       handleInputChange={handleInputChange}
     />
   );
+
+  return null;
 };
